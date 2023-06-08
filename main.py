@@ -103,6 +103,7 @@ if __name__ == "__main__":
         try:
             run_with_controller()
         except KeyboardInterrupt:
+            controller.close()
             break
     
     
