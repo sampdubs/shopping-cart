@@ -1,5 +1,6 @@
 import RPi.GPIO as GPIO
 from time import sleep
+from xbox360controller import Xbox360Controller
 
 LEFT_SPEED_PIN = 12
 RIGHT_SPEED_PIN = 13
@@ -10,10 +11,14 @@ RIGHT_DIRECTION_PIN = 21
 
 LEFT_PWM = RIGHT_PWM = None
 
+DEADZONE = 0.1
+
+controller = None
+
 # GPIO.setwarnings(False)			#disable warnings
 GPIO.setmode(GPIO.BCM)		#set pin numbering system
 
-def setup_pins():
+def setup():
     GPIO.setup(LEFT_SPEED_PIN, GPIO.OUT)
     GPIO.setup(RIGHT_SPEED_PIN, GPIO.OUT)
     GPIO.setup(LEFT_BRAKE_PIN, GPIO.OUT)
@@ -27,6 +32,10 @@ def setup_pins():
     RIGHT_PWM = GPIO.PWM(RIGHT_SPEED_PIN, 1000)
     LEFT_PWM.start(0)
     RIGHT_PWM.start(0)
+
+    global controller
+
+    controller = Xbox360Controller(0, axis_threshold=DEADZONE)
 
 def set_speed(speed_pwm, dir_pin, power):
     if power < 0:
@@ -55,9 +64,7 @@ def drive(left, right):
     set_speed(LEFT_PWM, LEFT_DIRECTION_PIN, left)
     set_speed(RIGHT_PWM, RIGHT_DIRECTION_PIN, right)
 
-if __name__ == "__main__":
-    setup_pins()
-
+def test_forward_backwards():
     while True:
         for power in range(0, 50):
             drive(power / 100, power / 100) # provide power cycle in the range 0-100
@@ -77,3 +84,25 @@ if __name__ == "__main__":
         
         drive(0, 0)
         sleep(3)
+
+def run_with_controller():
+    left = -controller.axis_l.y
+    right = -controller.axis_r.y
+    if abs(left) < DEADZONE:
+        left = 0
+    if abs(right) < DEADZONE:
+        right = 0
+    
+    drive(left, right)
+
+
+if __name__ == "__main__":
+    setup()
+
+    while True:
+        try:
+            run_with_controller()
+        except KeyboardInterrupt:
+            break
+    
+    
