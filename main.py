@@ -11,7 +11,7 @@ RIGHT_DIRECTION_PIN = 21
 LEFT_PWM = RIGHT_PWM = None
 
 # GPIO.setwarnings(False)			#disable warnings
-GPIO.setmode(GPIO.BOARD)		#set pin numbering system
+GPIO.setmode(GPIO.BCM)		#set pin numbering system
 
 def setup_pins():
     GPIO.setup(LEFT_SPEED_PIN, GPIO.OUT)
@@ -24,16 +24,16 @@ def setup_pins():
     global LEFT_PWM, RIGHT_PWM
 
     LEFT_PWM = GPIO.PWM(LEFT_SPEED_PIN, 1000)
-    RIGHT_PWM = GPIO.PWM(LEFT_SPEED_PIN, 1000)
+    RIGHT_PWM = GPIO.PWM(RIGHT_SPEED_PIN, 1000)
     LEFT_PWM.start(0)
     RIGHT_PWM.start(0)
 
 def set_speed(speed_pwm, dir_pin, power):
     if power < 0:
-        GPIO.output(dir_pin, GPIO.HIGH)
-    else:
         GPIO.output(dir_pin, GPIO.LOW)
-    speed_pwm.ChangeDutyCycle(power * 100)
+    else:
+        GPIO.output(dir_pin, GPIO.HIGH)
+    speed_pwm.ChangeDutyCycle(abs(power * 100))
 
 def set_brake(brake_pin, brake):
     if brake:
@@ -56,15 +56,23 @@ def drive(left, right):
     set_speed(RIGHT_PWM, RIGHT_DIRECTION_PIN, right)
 
 if __name__ == "__main__":
+    setup_pins()
+
     while True:
-        for duty in range(0,50,1):
-            drive(duty / 100, duty / 100) #provide duty cycle in the range 0-100
+        for power in range(0, 50):
+            drive(power / 100, power / 100) # provide power cycle in the range 0-100
             sleep(0.03)
 
         sleep(0.2)
         
-        for duty in range(50, 0, -1):
-            drive(duty / 100, duty / 100)
+        for power in range(50, -50, -1):
+            drive(power / 100, power / 100)
+            sleep(0.03)
+
+        sleep(0.2)
+        
+        for power in range(-50, 0):
+            drive(power / 100, power / 100)
             sleep(0.03)
         
         drive(0, 0)
