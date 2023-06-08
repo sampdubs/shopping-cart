@@ -15,8 +15,7 @@ DEADZONE = 0.1
 
 controller = None
 
-# GPIO.setwarnings(False)			#disable warnings
-GPIO.setmode(GPIO.BCM)		#set pin numbering system
+GPIO.setmode(GPIO.BCM)
 
 def setup():
     GPIO.setup(LEFT_SPEED_PIN, GPIO.OUT)
@@ -42,7 +41,8 @@ def set_speed(speed_pwm, dir_pin, power):
         GPIO.output(dir_pin, GPIO.LOW)
     else:
         GPIO.output(dir_pin, GPIO.HIGH)
-    speed_pwm.ChangeDutyCycle(abs(power * 100))
+
+    speed_pwm.ChangeDutyCycle(min(100, abs(power * 100)))
 
 def set_brake(brake_pin, brake):
     if brake:
@@ -67,7 +67,7 @@ def drive(left, right):
 def test_forward_backwards():
     while True:
         for power in range(0, 50):
-            drive(power / 100, power / 100) # provide power cycle in the range 0-100
+            drive(power / 100, power / 100)
             sleep(0.03)
 
         sleep(0.2)
@@ -85,7 +85,7 @@ def test_forward_backwards():
         drive(0, 0)
         sleep(3)
 
-def run_with_controller():
+def tank_drive():
     left = -controller.axis_l.y
     right = -controller.axis_r.y
     if abs(left) < DEADZONE:
@@ -95,15 +95,25 @@ def run_with_controller():
     
     drive(left, right)
 
+def arcade_drive():
+    speed = -controller.axis_l.y
+    turn = controller.axis_r.x
+    if abs(speed) < DEADZONE:
+        speed = 0
+    if abs(turn) < DEADZONE:
+        turn = 0
+    
+    drive(speed + turn, speed - turn)
 
 if __name__ == "__main__":
     setup()
 
     while True:
         try:
-            run_with_controller()
+            arcade_drive()
+            # tank_drive()
         except KeyboardInterrupt:
+            GPIO.cleanup()
             controller.close()
             break
-    
     
