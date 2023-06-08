@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 from time import sleep
 from xbox360controller import Xbox360Controller
+from sound import make_sound
 
 LEFT_SPEED_PIN = 12
 RIGHT_SPEED_PIN = 13
@@ -8,6 +9,8 @@ LEFT_BRAKE_PIN = 26
 RIGHT_BRAKE_PIN = 16
 LEFT_DIRECTION_PIN = 20
 RIGHT_DIRECTION_PIN = 21
+
+LIGHT_PIN = 2
 
 LEFT_PWM = RIGHT_PWM = None
 
@@ -25,6 +28,8 @@ def setup():
     GPIO.setup(LEFT_DIRECTION_PIN, GPIO.OUT)
     GPIO.setup(RIGHT_DIRECTION_PIN, GPIO.OUT)
 
+    GPIO.setup(LIGHT_PIN, GPIO.OUT)
+
     global LEFT_PWM, RIGHT_PWM
 
     LEFT_PWM = GPIO.PWM(LEFT_SPEED_PIN, 1000)
@@ -35,6 +40,9 @@ def setup():
     global controller
 
     controller = Xbox360Controller(0, axis_threshold=DEADZONE)
+
+def set_light(state):
+    GPIO.output(LIGHT_PIN, state)
 
 def set_speed(speed_pwm, dir_pin, power):
     if power < 0:
@@ -107,6 +115,7 @@ def arcade_drive():
 
 if __name__ == "__main__":
     setup()
+    make_sound(3)
 
     while True:
         try:
